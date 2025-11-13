@@ -30,7 +30,7 @@ public class CalendarGenerator {
     private static void loadDates() throws IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
 
-        BufferedReader reader = new BufferedReader(new FileReader("dates.csv"));
+        BufferedReader reader = new BufferedReader(new FileReader("dates2026.csv"));
         String line;
         while ((line = reader.readLine()) != null) {
             line = line.trim();
