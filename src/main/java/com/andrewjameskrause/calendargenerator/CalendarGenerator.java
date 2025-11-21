@@ -50,31 +50,35 @@ public class CalendarGenerator {
     }
     
     private static void drawBox(PDPageContentStream contentStream, float x, float y, float width, float height, Color color) throws IOException {
-        // Set line width and color
+        //  draw from center
+        x -= (width / 2.0f);
+        y += (height / 2.0f);
+        
+        //  set line width and color
         contentStream.setLineWidth(1);
         contentStream.setStrokingColor(Color.GRAY);
         contentStream.setNonStrokingColor(color);
 
-        // Start path
+        //  start path
         contentStream.moveTo(x + CORNER_RADIUS, y);
 
-        // Top-right corner
+        //  top-right corner
         contentStream.lineTo(x + width - CORNER_RADIUS, y);
         contentStream.curveTo(x + width, y, x + width, y + CORNER_RADIUS, x + width, y + CORNER_RADIUS);
 
-        // Bottom-right corner
+        //  bottom-right corner
         contentStream.lineTo(x + width, y + height - CORNER_RADIUS);
         contentStream.curveTo(x + width, y + height, x + width - CORNER_RADIUS, y + height, x + width - CORNER_RADIUS, y + height);
 
-        // Bottom-left corner
+        //  bottom-left corner
         contentStream.lineTo(x + CORNER_RADIUS, y + height);
         contentStream.curveTo(x, y + height, x, y + height - CORNER_RADIUS, x, y + height - CORNER_RADIUS);
 
-        // Top-left corner
+        //  top-left corner
         contentStream.lineTo(x, y + CORNER_RADIUS);
         contentStream.curveTo(x, y, x + CORNER_RADIUS, y, x + CORNER_RADIUS, y);
 
-        // Close and fill/stroke
+        //  close and fill/stroke
         contentStream.closePath();
         contentStream.fillAndStroke();
     }
@@ -93,12 +97,13 @@ public class CalendarGenerator {
         PDPage page = new PDPage(new PDRectangle(PAGE_WIDTH * DPI, PAGE_HEIGHT * DPI));
         PDRectangle mediaBox = page.getMediaBox();
         PDPageContentStream contentStream = new PDPageContentStream(document, page);
-        
+/*        
+        //  set page background color
         contentStream.setNonStrokingColor(new java.awt.Color(227, 248, 240));
         contentStream.addRect(mediaBox.getLowerLeftX(), mediaBox.getLowerLeftY(),
                 mediaBox.getWidth(), mediaBox.getHeight());
         contentStream.fill();
-    
+*/    
         float width = ((PAGE_WIDTH - 1.0f) * DPI) / 7.0f;
         float height = ((PAGE_HEIGHT - 3.0f) * DPI) / 6.0f;
 
@@ -117,16 +122,16 @@ public class CalendarGenerator {
                 }
             }
 
-            float xPos = (x + 0.5f) * width;
-            float yPos = mediaBox.getHeight() - (y + 2.75f) * height;
+            float xPos = (x + 0.325f) * width + (width * 0.5f);
+            float yPos = mediaBox.getHeight() - (y + 3.25f) * height;
             Color color = (x == 0 || x == 6) ? Color.LIGHT_GRAY : Color.WHITE;
             drawBox(contentStream, xPos, yPos, width * 0.95f, height * 0.95f, color);
 
-            centerText(contentStream, 18.0f, xPos + 20.0f, yPos + height - 30.0f, Integer.toString(day));
+            centerText(contentStream, 18.0f, xPos + 20.0f - (width / 2.0f), yPos + height - 30.0f + (height / 2.0f), Integer.toString(day));
 
             LocalDate key = LocalDate.of(year, month, day);
             if (dates.containsKey(key)) {
-                centerText(contentStream, 10.0f, xPos + width / 2, yPos + + 10.0f, dates.get(key));
+                centerText(contentStream, 10.0f, xPos, yPos + 10.0f + (height / 2.0f), dates.get(key));
             }
         }
         
