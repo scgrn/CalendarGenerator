@@ -83,9 +83,9 @@ public class CalendarGenerator {
         contentStream.fillAndStroke();
     }
     
-    private static void centerText(PDPageContentStream contentStream, float fontSize, float x, float y, String text) throws IOException {
+    private static void centerText(PDPageContentStream contentStream, float fontSize, float x, float y, String text, Color color) throws IOException {
         contentStream.beginText();
-        contentStream.setNonStrokingColor(Color.BLACK);
+        contentStream.setNonStrokingColor(color);
         contentStream.setFont(font, fontSize);
         float stringWidth = font.getStringWidth(text) / 1000 * fontSize;
         contentStream.newLineAtOffset(x - (stringWidth / 2.0f), y);
@@ -112,6 +112,17 @@ public class CalendarGenerator {
         int x = firstDay.getDayOfWeek().getValue() - 1;
         int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
         
+        //  draw day of week header
+        for (int day = 0; day < 7; day++) {
+            String[] NAMES = { "FUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "CATURDAY" };
+            
+            float xPos = (day + 0.325f) * width + (width * 0.5f);
+            float yPos = mediaBox.getHeight() - (1.825f) * height;
+            drawBox(contentStream, xPos, yPos, width * 0.95f, 0.35f * DPI, new Color(128, 128, 128));
+
+            centerText(contentStream, 12.0f, xPos, yPos + 20.0f, NAMES[day], Color.WHITE);
+        }
+        
         int y = 0;
         for (int day = 1; day <= daysInMonth; day++) {
             x++;
@@ -127,16 +138,16 @@ public class CalendarGenerator {
             Color color = (x == 0 || x == 6) ? Color.LIGHT_GRAY : Color.WHITE;
             drawBox(contentStream, xPos, yPos, width * 0.95f, height * 0.95f, color);
 
-            centerText(contentStream, 18.0f, xPos + 20.0f - (width / 2.0f), yPos + height - 30.0f + (height / 2.0f), Integer.toString(day));
+            centerText(contentStream, 18.0f, xPos + 20.0f - (width / 2.0f), yPos + height - 30.0f + (height / 2.0f), Integer.toString(day), Color.BLACK);
 
             LocalDate key = LocalDate.of(year, month, day);
             if (dates.containsKey(key)) {
-                centerText(contentStream, 10.0f, xPos, yPos + 10.0f + (height / 2.0f), dates.get(key));
+                centerText(contentStream, 10.0f, xPos, yPos + 10.0f + (height / 2.0f), dates.get(key), Color.BLACK);
             }
         }
         
         String monthName = new DateFormatSymbols().getMonths()[month - 1];
-        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (1.5f * DPI), monthName);
+        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (1.25f * DPI), monthName, Color.BLACK);
 
         contentStream.close();
         document.addPage(page);
