@@ -114,7 +114,7 @@ public class CalendarGenerator {
         
         //  draw day of week header
         for (int day = 0; day < 7; day++) {
-            String[] NAMES = { "FUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "CATURDAY" };
+            String[] NAMES = { "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "CATURDAY" };
             
             float xPos = (day + 0.325f) * width + (width * 0.5f);
             float yPos = mediaBox.getHeight() - (1.825f) * height;
@@ -142,7 +142,13 @@ public class CalendarGenerator {
 
             LocalDate key = LocalDate.of(year, month, day);
             if (dates.containsKey(key)) {
-                centerText(contentStream, 10.0f, xPos, yPos + 10.0f + (height / 2.0f), dates.get(key), Color.BLACK);
+                String dateName = dates.get(key);
+                String[] parts = dateName.split("\\\\n");
+                float textY = yPos + 10.0f + (height / 2.0f);
+                for (int i = parts.length - 1; i >= 0; i--) {
+                    centerText(contentStream, 10.0f, xPos, textY, parts[i], Color.BLACK);
+                    textY += 15.0f;
+                }
             }
         }
         
