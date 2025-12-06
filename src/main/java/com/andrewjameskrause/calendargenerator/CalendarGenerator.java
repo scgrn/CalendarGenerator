@@ -222,7 +222,8 @@ public class CalendarGenerator {
         for (int month = 1; month <= 12; month++) {
             generateMonth(document, 2026, month);
         }
-        document.save("calendar.pdf");
+        // document.save("calendar.pdf");
+        document.save("sample.pdf");
         document.close();
     }
 }
