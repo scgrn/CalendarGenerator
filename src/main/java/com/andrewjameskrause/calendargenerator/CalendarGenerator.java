@@ -93,6 +93,42 @@ public class CalendarGenerator {
         contentStream.endText();
     }
 
+    private static void drawMinimonth(PDPageContentStream contentStream, int xOffset, int year, int month) throws IOException {
+        final float TOP = 745.0f;
+        final float X_SPACING = 17.0f;
+        final float Y_SPACING = 13.0f;
+        
+        LocalDate firstDay = LocalDate.of(year, month, 1);
+
+        int x = firstDay.getDayOfWeek().getValue() - 1;
+        int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
+
+        int y = 0;
+        for (int day = 1; day <= daysInMonth; day++) {
+            x++;
+            if (x >= 7) {
+                x = 0;
+                if (day > 1) {
+                    y++;
+                }
+            }
+
+            float xPos = x * X_SPACING + xOffset;
+            float yPos = TOP - y * Y_SPACING;
+            centerText(contentStream, 9.0f, xPos, yPos, Integer.toString(day), Color.BLACK);
+        }        
+        
+        String[] weekdays = {"S", "M", "T", "W", "TH", "F", "S"};
+        for (x = 0; x < 7; x++) {
+            float xPos = x * X_SPACING + xOffset;
+            float yPos = TOP + Y_SPACING;
+            centerText(contentStream, 9.0f, xPos, yPos, weekdays[x], Color.BLACK);
+        }
+        
+        String monthName = new DateFormatSymbols().getMonths()[month - 1];
+        centerText(contentStream, 9.0f, xOffset + 3 * X_SPACING, TOP + (Y_SPACING * 2) + 5, monthName + " " + Integer.toString(year), Color.BLACK);
+    }
+
     private static void generateMonth(PDDocument document, int year, int month) throws IOException {
         PDPage page = new PDPage(new PDRectangle(PAGE_WIDTH * DPI, PAGE_HEIGHT * DPI));
         PDRectangle mediaBox = page.getMediaBox();
@@ -152,9 +188,27 @@ public class CalendarGenerator {
             }
         }
         
+        //  month title
         String monthName = new DateFormatSymbols().getMonths()[month - 1];
-        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (1.25f * DPI), monthName, Color.BLACK);
+        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (1.4f * DPI), monthName, Color.BLACK);
 
+        //  minimonths
+        int miniMonth = month - 1;
+        int miniYear = year;
+        if (miniMonth < 1) {
+            miniMonth += 12;
+            miniYear--;
+        }
+        drawMinimonth(contentStream, 50, miniYear, miniMonth);
+
+        miniMonth = month + 1;
+        miniYear = year;
+        if (miniMonth > 12) {
+            miniMonth -= 12;
+            miniYear++;
+        }
+        drawMinimonth(contentStream, 650, miniYear, miniMonth); // TODO: magic number!
+        
         contentStream.close();
         document.addPage(page);
     }
