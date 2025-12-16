@@ -15,7 +15,9 @@ import java.text.DateFormatSymbols;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.WeekFields;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class CalendarGenerator {
@@ -23,6 +25,7 @@ public class CalendarGenerator {
     private static final float CORNER_RADIUS = 12.0f;
     private static final float PAGE_WIDTH = 11.25f;
     private static final float PAGE_HEIGHT = 11.25f;
+    private static float DOWNWARD_SHIFT = 0.75f;
 
     private static Map<LocalDate, String> dates = new HashMap<>();
     private static PDType1Font font;
@@ -94,7 +97,7 @@ public class CalendarGenerator {
     }
 
     private static void drawMinimonth(PDPageContentStream contentStream, int xOffset, int year, int month) throws IOException {
-        final float TOP = 745.0f;
+        final float TOP = 745.0f - (DOWNWARD_SHIFT * DPI);
         final float X_SPACING = 17.0f;
         final float Y_SPACING = 13.0f;
         
@@ -140,24 +143,19 @@ public class CalendarGenerator {
                 mediaBox.getWidth(), mediaBox.getHeight());
         contentStream.fill();
 */    
+        YearMonth yearMonth = YearMonth.of(year, month);
+        WeekFields wf = WeekFields.of(Locale.US);
+        int lastDayWeek = yearMonth.atEndOfMonth().get(wf.weekOfMonth());
+        int firstDayWeek = yearMonth.atDay(1).get(wf.weekOfMonth());
+        int weeksInMonth = lastDayWeek - firstDayWeek + 1;
+        
         float width = ((PAGE_WIDTH - 1.0f) * DPI) / 7.0f;
-        float height = ((PAGE_HEIGHT - 3.0f) * DPI) / 6.0f;
-
+        float height = ((PAGE_HEIGHT - 3.0f) * DPI) / (weeksInMonth < 6 ? 6.5f : 7.0f);
+        
         LocalDate firstDay = LocalDate.of(year, month, 1);
 
         int x = firstDay.getDayOfWeek().getValue() - 1;
         int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
-        
-        //  draw day of week header
-        for (int day = 0; day < 7; day++) {
-            String[] NAMES = { "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "CATURDAY" };
-            
-            float xPos = (day + 0.325f) * width + (width * 0.5f);
-            float yPos = mediaBox.getHeight() - (1.825f) * height;
-            drawBox(contentStream, xPos, yPos, width * 0.95f, 0.35f * DPI, new Color(128, 128, 128));
-
-            centerText(contentStream, 12.0f, xPos, yPos + 20.0f, NAMES[day], Color.WHITE);
-        }
         
         int y = 0;
         for (int day = 1; day <= daysInMonth; day++) {
@@ -170,7 +168,8 @@ public class CalendarGenerator {
             }
 
             float xPos = (x + 0.325f) * width + (width * 0.5f);
-            float yPos = mediaBox.getHeight() - (y + 3.25f) * height;
+            float shift = ((weeksInMonth < 6 ? 0.2f : 0.4f) + DOWNWARD_SHIFT) * DPI;
+            float yPos = mediaBox.getHeight() - shift - (y + 3.25f) * height;
             Color color = (x == 0 || x == 6) ? Color.LIGHT_GRAY : Color.WHITE;
             drawBox(contentStream, xPos, yPos, width * 0.95f, height * 0.95f, color);
 
@@ -188,9 +187,21 @@ public class CalendarGenerator {
             }
         }
         
+        //  draw day of week header
+        height = ((PAGE_HEIGHT - 3.0f) * DPI) / 6.0f;
+        for (int day = 0; day < 7; day++) {
+            String[] NAMES = { "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "CATURDAY" };
+            
+            float xPos = (day + 0.325f) * width + (width * 0.5f);
+            float yPos = mediaBox.getHeight() - (DOWNWARD_SHIFT * DPI) - (1.825f) * height;
+            drawBox(contentStream, xPos, yPos, width * 0.95f, 0.35f * DPI, new Color(128, 128, 128));
+
+            centerText(contentStream, 12.0f, xPos, yPos + 20.0f, NAMES[day], Color.WHITE);
+        }
+
         //  month title
         String monthName = new DateFormatSymbols().getMonths()[month - 1];
-        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (1.4f * DPI), monthName, Color.BLACK);
+        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (DOWNWARD_SHIFT * DPI) - (1.4f * DPI), monthName, Color.BLACK);
 
         //  minimonths
         int miniMonth = month - 1;
