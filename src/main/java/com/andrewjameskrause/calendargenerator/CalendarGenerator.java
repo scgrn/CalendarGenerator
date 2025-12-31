@@ -9,6 +9,7 @@ import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 
 import java.awt.Color;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DateFormatSymbols;
@@ -19,6 +20,8 @@ import java.time.temporal.WeekFields;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDType0Font;
 
 public class CalendarGenerator {
     private static final float DPI = 72.0f;
@@ -28,7 +31,8 @@ public class CalendarGenerator {
     private static float DOWNWARD_SHIFT = 0.75f;
 
     private static Map<LocalDate, String> dates = new HashMap<>();
-    private static PDType1Font font;
+    private static PDType0Font font1;
+    private static PDType1Font font2;
     
     private static void loadDates() throws IOException {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd");
@@ -86,7 +90,7 @@ public class CalendarGenerator {
         contentStream.fillAndStroke();
     }
     
-    private static void centerText(PDPageContentStream contentStream, float fontSize, float x, float y, String text, Color color) throws IOException {
+    private static void centerText(PDFont font, PDPageContentStream contentStream, float fontSize, float x, float y, String text, Color color) throws IOException {
         contentStream.beginText();
         contentStream.setNonStrokingColor(color);
         contentStream.setFont(font, fontSize);
@@ -118,18 +122,18 @@ public class CalendarGenerator {
 
             float xPos = x * X_SPACING + xOffset;
             float yPos = TOP - y * Y_SPACING;
-            centerText(contentStream, 9.0f, xPos, yPos, Integer.toString(day), Color.BLACK);
+            centerText(font2, contentStream, 9.0f, xPos, yPos, Integer.toString(day), Color.BLACK);
         }        
         
         String[] weekdays = {"S", "M", "T", "W", "TH", "F", "S"};
         for (x = 0; x < 7; x++) {
             float xPos = x * X_SPACING + xOffset;
             float yPos = TOP + Y_SPACING;
-            centerText(contentStream, 9.0f, xPos, yPos, weekdays[x], Color.BLACK);
+            centerText(font2, contentStream, 9.0f, xPos, yPos, weekdays[x], Color.BLACK);
         }
         
         String monthName = new DateFormatSymbols().getMonths()[month - 1];
-        centerText(contentStream, 9.0f, xOffset + 3 * X_SPACING, TOP + (Y_SPACING * 2) + 5, monthName + " " + Integer.toString(year), Color.BLACK);
+        centerText(font2, contentStream, 9.0f, xOffset + 3 * X_SPACING, TOP + (Y_SPACING * 2) + 5, monthName + " " + Integer.toString(year), Color.BLACK);
     }
 
     private static void generateMonth(PDDocument document, int year, int month) throws IOException {
@@ -170,10 +174,10 @@ public class CalendarGenerator {
             float xPos = (x + 0.325f) * width + (width * 0.5f);
             float shift = ((weeksInMonth < 6 ? 0.2f : 0.4f) + DOWNWARD_SHIFT) * DPI;
             float yPos = mediaBox.getHeight() - shift - (y + 3.25f) * height;
-            Color color = (x == 0 || x == 6) ? Color.LIGHT_GRAY : Color.WHITE;
+            Color color = (x == 0 || x == 6) ? new Color(0.9f, 0.9f, 0.9f) : Color.WHITE; // Color.LIGHT_GRAY : Color.WHITE;
             drawBox(contentStream, xPos, yPos, width * 0.95f, height * 0.95f, color);
 
-            centerText(contentStream, 18.0f, xPos + 20.0f - (width / 2.0f), yPos + height - 30.0f + (height / 2.0f), Integer.toString(day), Color.BLACK);
+            centerText(font2, contentStream, 18.0f, xPos + 20.0f - (width / 2.0f), yPos + height - 30.0f + (height / 2.0f), Integer.toString(day), Color.BLACK);
 
             LocalDate key = LocalDate.of(year, month, day);
             if (dates.containsKey(key)) {
@@ -181,7 +185,7 @@ public class CalendarGenerator {
                 String[] parts = dateName.split("\\\\n");
                 float textY = yPos + 10.0f + (height / 2.0f);
                 for (int i = parts.length - 1; i >= 0; i--) {
-                    centerText(contentStream, 10.0f, xPos, textY, parts[i], Color.BLACK);
+                    centerText(font2, contentStream, 10.0f, xPos, textY, parts[i], Color.BLACK);
                     textY += 15.0f;
                 }
             }
@@ -194,14 +198,14 @@ public class CalendarGenerator {
             
             float xPos = (day + 0.325f) * width + (width * 0.5f);
             float yPos = mediaBox.getHeight() - (DOWNWARD_SHIFT * DPI) - (1.825f) * height;
-            drawBox(contentStream, xPos, yPos, width * 0.95f, 0.35f * DPI, new Color(128, 128, 128));
+            drawBox(contentStream, xPos, yPos, width * 0.95f, 0.35f * DPI, new Color(0.65f, 0.65f, 0.65f));
 
-            centerText(contentStream, 12.0f, xPos, yPos + 20.0f, NAMES[day], Color.WHITE);
+            centerText(font2, contentStream, 12.0f, xPos, yPos + 20.0f, NAMES[day], Color.WHITE);
         }
 
         //  month title
         String monthName = new DateFormatSymbols().getMonths()[month - 1];
-        centerText(contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (DOWNWARD_SHIFT * DPI) - (1.4f * DPI), monthName, Color.BLACK);
+        centerText(font1, contentStream, 54.0f, (mediaBox.getWidth() / 2.0f), mediaBox.getHeight() - (DOWNWARD_SHIFT * DPI) - (1.2f * DPI), monthName, Color.BLACK);
 
         //  minimonths
         int miniMonth = month - 1;
@@ -227,13 +231,14 @@ public class CalendarGenerator {
     public static void main(String[] args) throws IOException {
         loadDates();
 
-        font = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-
         PDDocument document = new PDDocument();
+
+        font1 = PDType0Font.load(document, new File("MarysonPrintPERSONALUSE-Regular.ttf"));
+        font2 = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+
         for (int month = 1; month <= 12; month++) {
             generateMonth(document, 2026, month);
         }
-        // document.save("calendar.pdf");
         document.save("sample.pdf");
         document.close();
     }

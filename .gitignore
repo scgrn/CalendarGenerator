@@ -1,6 +1,8 @@
 target/
 dev/
 calendar.pdf
+*.ttf
+*.otf
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
